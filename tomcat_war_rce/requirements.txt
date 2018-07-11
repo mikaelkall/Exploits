@@ -1,0 +1,2 @@
+mechanize==0.3.6
+requests==2.19.1
