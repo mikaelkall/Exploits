@@ -1,0 +1,5 @@
+{
+  "type" : "read",
+  "mbean" : "java.lang:type=Memory",
+  "target" : { "url" : "service:jmx:rmi:///jndi/rmi://localhost:22222/jmxrmi", }
+}
