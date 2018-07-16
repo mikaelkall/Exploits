@@ -1,0 +1,12 @@
+[{
+  "type": "read",
+  "mbean": "java.lang:type=Memory",
+  "attribute":"HeapMemoryUsage",
+  "target": { "url" : "service:jmx:rmi:///jndi/rmi://localhost:22222/jmxrmi" }
+},
+{
+  "type":"read",
+  "mbean":"java.lang:type=Runtime",
+  "attribute":"Uptime",
+  "target": { "url" : "service:jmx:rmi:///jndi/rmi://localhost:22222/jmxrmi" }
+}]
