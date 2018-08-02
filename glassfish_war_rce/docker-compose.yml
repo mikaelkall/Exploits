@@ -1,0 +1,12 @@
+version: "3.1"
+
+services:
+  glassfish:
+    build:
+      context: ./docker/glassfish
+    ports:
+      - "8080:8080"
+      - "4848:4848"
+    environment:
+      - GLASSFISH_PASS="admin"
+    network_mode: "host"
