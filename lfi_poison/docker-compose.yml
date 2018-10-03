@@ -1,0 +1,8 @@
+version: "3.1"
+
+services:
+  lfi-php5:
+    build:
+      context: ./docker/lfi-php5
+    ports:
+      - "8080:80"
