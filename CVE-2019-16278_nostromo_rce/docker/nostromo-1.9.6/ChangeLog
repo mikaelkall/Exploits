@@ -1,0 +1,432 @@
+	$nostromo: ChangeLog,v 1.229 2016/04/12 19:15:04 hacki Exp $
+
+1.9.6
+=====
+- Restore original errno value after handling SIGCHLD.  Otherwise
+  this could lead to a break out of the main select(2) loop and therefore
+  of unexpected termination of nostromo.
+  Spotted by Adam Wozniak, nice catch!
+- Change the crypt(3) API, which is used for basic authentication, to
+  accept all supported algorithms not just DES.
+- Check crypt(3) for returning NULL to prevent the nhttpd process to core
+  dump in this case.
+- Add server cache for basic authentication credentials to speed up
+  performance.  This will save us filesystem access to htpasswd and additional
+  password encryption cpu cycles for crypt(3).
+- Add MD5, Blowfish-a, and Blowfish-b algorithm to the crypt(1) tool.
+- Replace rand(3) with arc4random(3) in the crypt(1) tool for OpenBSD,
+  NetBSD, and FreeBSD.
+- Fix broken BSD authentication method for basic authentication.
+- Fix several bites to make nostromo compile cleanly on the tested
+  platforms again which are OpenBSD, NetBSD, FreeBSD, and Linux.
+- Rewrote printenv CGI from perl to shell script.
+- Add support for SIGHUP configuration reload.
+- Make a child process use the default signals instead inheriting the
+  parent process signal handler.  This fixes some odd issues.
+- Update copyright year to 2004 - 2016 and add nostromo CVS Id to all files.
+
+1.9.5
+=====
+- Handle "Location:" field correctly when passed by a CGI.
+  Bug reported by Axel Gonzalez.
+
+1.9.4
+=====
+- Update copyright year to 2004 - 2011.
+- Make nostromo compile again by default;  Remove -Werror in src/nhttpd
+  makefiles and #include <sys/param.h> to src/nhttpd/main.c.
+- Fix a bug where when nostromo doesn't run in chroot mode somebody can
+  access files beyond our htdocs environment by using specific encoded
+  characters in the request URI (security issue).
+  Issue found and reported by RedTeam Pentesting GmbH.
+- Fix a bug where in certain conditions garbage is written into the access_log
+  user agent field.
+- Do proper handling of max. file descriptors and allow to bump the
+  select(2) max. file descriptors limit (FD_SETSIZE) via the CON define in
+  config.h by dynamically allocating the fd_sets.
+
+1.9.3
+=====
+- Fix two err(3) calls which are lacking an `%s' modifier (security issue).
+  Patch from Simon Kuhnle.
+- Fix wrong select() / send_file() looping (resulting in high process load
+  occasionally), by fixing bogus EAGAIN error handling in sys_write_a().
+- Fix missing ``.Ed'' in nhttpd.8 man page.
+
+1.9.2
+=====
+- Fix a bug where a 403 response is returned instead of a 404 response.
+  Patch from Szabolcs Nagy.
+- Style diff which fixes spacing from Daniel Ouellet.
+- Add optional ``homedirs_public'' configuration parameter to restrict access
+  within the home directories.  Suggested by Simon Kuhnle.
+- Add mandatory ``serverlisten'' configuration parameter to allow specific
+  interface binding.
+- Replaced libmy with latest version libmy-1.7.
+
+1.9.1
+=====
+- Replace off_t with intmax_t integer type since problems have been reported
+  with compiling on some 64bit Linux systems.  Therefore we remove the GNU
+  compiler option '-D_FILE_OFFSET_BITS=64'.  Initial diff received from
+  Kurt Roeckx.
+- For unused, string based configuration options, use '\0' instead strlcpy()
+  '0' into the array.  It's less disturbing and more straight.
+  Diff received from Szabolcs Nagy.
+- Don't leave some alias specific buffers uninitialized, because it can
+  happen that we access those later.  Bug reported by Szabolcs Nagy.
+- According to RFC 3875 set the SERVER_NAME environment variable dynamicly
+  dependend on the "Host:" request header field instead setting it staticly
+  to the configured servername.  Bug reported by Szabolcs Nagy.
+- Fix a bug where a CGI "Status:" request for 403 or 404 caused a corrupt
+  response header.  Bug reported by Szabolcs Nagy.
+- The header field "Host:" is mandatory for HTTP/1.1 client requests.
+  If it doesn't exist return 400 Bad Request instead of further processing
+  the request.  Bug reported by Szabolcs Nagy.
+- Drop MacOSX support.  Too many tweaks with recent MacOSX versions for
+  compiling.
+- Update copyright year to 2004 - 2009.
+- Fix sys_log() by replacing syslog() with vsyslog() so the string
+  arguments get passed.  While here move from LOG_DEBUG to LOG_INFO.
+- Replaced libmy with latest version libmy-1.6.
+
+1.9
+===
+- Replace server log parameter entries in the man page by syslog(3).
+
+1.8.9
+=====
+- send all server log messages to syslog(3) instead to our own log file
+  The configuration parameter "logserver" is obsolete therefore and has
+  been removed from nhttpd.conf.  Suggested by Matthias-Christian Ott
+- Make "logpid" and "logaccess" configuration parameters optional, which
+  allows it to disable pid and access log creation.  Suggested by
+  Matthias-Christian Ott.
+- Remove the whole BSD authentication code on non-OpenBSD systems.
+  Diff received from Matthias-Christian Ott.
+
+1.8.8
+=====
+- Fix a bug where a requested file with size 0 caused us to send an HTTP
+  repsonse in a loop.  Bug reported by Kai Hendry.
+- Fix a bug where a directory request without trailing "/" to a virtual host
+  URL returned a wrong 301-Location field value.  Bug reported by Kai Hendry.
+- Change mime types parsing to the default syntax;  extensions are separated
+  by spaces instead by commas.  Our default mime types file (conf/mimes) has
+  been changed to the new syntax therefore.
+- Also check if HTTPS requests do match to our default URL before searching
+  for virtual hosts.
+
+1.8.7
+=====
+- Fix security issue for none chroot environments reported by Ben Hutchings:
+  Disallow any direct access to upper level directories (..).  On occurrence
+  of a "/../" string in the request URI we return 400 Bad Request now.  This
+  prevents access to files beyond of the serverroot directory.
+- Fix a bug reported by Szabolcs Nagy:  If a CGI option ends with a "/"
+  don't apply the docindex to it.
+- If the PID file can't be created also report about the full filename in
+  the error log.  Requested by Kai Hendry.
+
+1.8.6
+=====
+- Handle POST requests with content length 0 correctly, diff received
+  from Georg Wendenburg.
+
+1.8.5
+=====
+- Added support for SSLv3.
+- Replaced a strlcpy() with memcpy() because at this point binary data
+  could be involved.  Pointed out by Georg Wendenburg.
+- Added CONTENT_TYPE CGI env, diff received from Georg Wendenburg.
+- Quiet down error messages in the server log file by moving some common
+  error messages to the debug mode output.
+
+1.8.4
+=====
+- If a select(2) error in the main loop is not EINTR, we shutdown the
+  server.  EFAULT, EBADF, and EINVAL are not acceptable.
+- When a connection gets closed FD_CLR() the write set also in either case.
+  this fix should finally let get us rid from the select(2) EBADF error,
+  and overwrites the EBADF workaround fix from version 1.8.3.
+
+1.8.3
+=====
+- Fix a Linux tweak with off_t by adding -D_FILE_OFFSET_BITS=64 to the
+  compiler options.
+- If a select(2) error in the main loop is not EINTR, close the connection.
+  this avoids endless looping e.g. when EBADF occurs.
+- Typo corrections for nhttpd.conf-dist and nhttpd.8 from Will Maier.
+
+1.8.2
+=====
+- Fix wrong version numbers.
+
+1.8.1
+=====
+- Fixed gcc3 tweak with variable array definition which caused compiliation
+  error on gcc2 platforms.
+- Replaced libmy with latest version libmy-1.5.
+
+1.8
+===
+- Added homedirs support.
+- Added basic authentication via BSD authentication.
+- Moved variable type for filesizes from int to off_t to enable proper
+  transfers of very large files.
+- Directory listing files are sorted alphabetical now.
+- Make our HTML output HTML 4.01 transitional.
+- Fixed man page typos.
+
+1.7.9
+=====
+- The rewritten http_header_comp() function implemented in version 1.7.7
+  could lead to a buffer overflow in some circumstances because the arrived
+  header sequence was not checked for its minimum size.  On my machines
+  this effect ended up in a immediately process termination.  Nasty bug
+  fixed now.  While we are at this function we also get rid of strlen()
+  because we already have the current header size saved in our connection
+  structure; safer and faster.
+- Fixed man page typos.
+
+1.7.8
+=====
+- CGIs are no longer determined by a CGI alias.  nhttpd checks now if a
+  file has the world executable flag set, and if yes the file is handled
+  as a CGI.  this allows you to place CGIs anywhere in your document root,
+  and also to use CGIs as index.  the cgiroot and cgiindex config options
+  are obsolete therefore and where removed from the configfile.  cgi-bin
+  has moved to htdocs/cgi-bin
+- Use stat(2) S_IROTH instead of access(2) to check for file permissions,
+  as we have that information already.
+- Added HTTP_ACCEPT_ENCODING CGI env
+- Simplified debug logging.
+- Fixed broken permissions checking on directories.
+- Fixed another binary data handling issue in CGI main loop.
+- Improved error handling for select(2) in CGI main loop.
+- On a fatal error at CGI execution send a 500 before exit(3).
+- Extended man page.
+
+1.7.7
+=====
+- http_header_comp() which checks if a complete header sequence arrived got
+  unreliable because of our new asynchronous connection handling since version
+  1.7.6.  The function is fixed now and as a side effect much more
+  simplified using less resources.
+
+1.7.6
+=====
+- Rewrote nostromo to handle connections fully asynchronous over one single
+  select(2) now.  This change also fixes the problem that slow connections
+  walked into a connection timeout.
+- The socket send buffer size is now kept to the operating system value by
+  default.  It can be changed optional in config.h by the SBS define.
+- Added debug mode option.
+- Added IF_MODIFIED_SINCE CGI env, diff received from Daniel Hartmeier.
+- Fixed unterminated childs leftover when parent is killed.
+- Fixed broken pipeline connection handling.
+- Fixed http_chunk() to handle also binary data now.
+- Fixed double printing of server port in the signature.
+- Fixed double creation of Location header field for CGIs.
+- Fixed wrong Location string for 301 responses over SSL non-default port.
+- Fixed access log variable which could be used uninitialized.
+- Fixed broken custom responses.  on large custom response files, the transfer
+  was aborted.
+- Disabled chunking for HTTP/1.0 clients.
+- Disabled case sensitivy for HTTP protocol.
+- Reorderd configuration file.
+- Removed a unnecessary getpid(2) when daemonizing.
+- Replaced signal handlers SIGTERM code with a volatile sig_atomic_t flag.
+- Extended man page.
+- Improved style / KNF.
+
+1.7.5
+=====
+- Set SO_SNDBUF size on accepted client socket, not on the listener socket,
+  because not every tcp/ip implementation supports inheritance.
+- Set sockets to O_NONBLOCK to prevent any possible blocks.
+
+1.7.4
+=====
+- Fixed POST content size limitation of 8KB. POST content can now be
+  unlimited and is handled in the forked CGI process itself.
+- Removed all setenv(3) and unsetenv(3) functions and set CGI environment vars
+  with execve(2) instead.  This has increased the CGI serving performance about
+  the factor 8.
+- The DOCUMENT_ROOT CGI environment variable was set wrong in some cases.
+  Bug fixed now.
+- In some cases the GMT offset was wrong calculated in the access log.
+  Bug fixed now
+
+1.7.3
+=====
+- Optimized performance and memory usage by source code optimization.
+- If a CGI post body included binary data the processing was aborted because
+  we could not handle the binary part.  Bug fixed now.
+- If a CGI post body was terminated with '\r\n' and some browsers count that
+  to its content length (and some do not, what a mess!) the post was ignored.
+  Bug fixed now
+- If the defined setuid user was not found, output a custom error instead the
+  getpwnam(3) errno which almost says nothing.
+- Removed -ansi compile option to follow OpenBSD.
+- Fixed -pedantic compile option source code quirks.
+- Replaced libmy with latest version libmy-1.4.
+- Changed logo URL.
+- Applied typo diff for man page received from Marc Balmer@.
+
+1.7.2
+=====
+- Added custom 401, 403, and 404 responses, requested by Marc Winiger.
+- Added nph CGI support.
+- Close all file descriptors which do not belong to the child after fork(2).
+- Replaced recv(2) with read(2) as we do not use flags.
+- Replaced send(2) with write(2) as we do not use flags.
+- Check more system calls for EINTR.
+- If a CGI post body was terminated with '\r\n', we did not parsed that and
+  the post was ignored.  Bug fixed now.
+- In some cases we had wrong data transmission because write(2) was not checked
+  for short writes.  Bug fixed now.
+- Fixed SSL memory leak.
+
+1.7.1
+=====
+- Implemented HEAD method.
+- If on basic authentication the realm option in a htaccess file could not
+  be parsed, we just kept the last value in the realm variable instead of
+  overwriting it with "unknown realm".  Bug fixed now.
+
+1.7
+===
+- Added 206 Partial Content.  Forced by Delta.
+- Added example lines to configuration file how to change default port 80.
+- Excluded sin6_len for Linux.
+- Imported new nostromo logo.
+- It is possible now to run IPv6 only.
+- Deny to run nhttpd as root.
+- Improved SSL handshake.
+- Main select(2) checks now writefds to cleanly serve partial file sends
+- Fixed typos and reviewed source code for BSD style.
+- If 301 Moved Permanently was called with https, we switched back to http
+  because we did not check for the https flag.  Bug fixed now.
+
+1.6
+===
+- Added IPv6 support.
+- Added pid file creation.
+- Set listener sockets to SO_REUSEADDR.
+- Moved a bunch of static environment variables to dynamic ones, because of
+  SSL and IPv6 introduction.
+- CGI https environment variable was set wrong because asking the wrong ssl
+  flag variable.  Bug fixed now.
+- If running in chroot mode, virtual hosts and aliases where not found because
+  we accessed the full path to the config file.  Bug fixed now.
+- If returning 500 on file send errors, open files where not closed.
+  Bug fixed now.
+
+1.5.1
+=====
+- chroot mode caused process hang if /dev/null where not found in the chroot
+  environment.  Bug fixed now.
+
+1.5
+===
+- Added SSL support.
+- Added 403 Forbidden, what means that files are checked for read permissions
+  now instead returning 500 Internal Server Error if no access.
+- Added TODO file.
+- Corrected and extended man page.
+- If the content type was unknown the previous content type was sent, which is
+  wrong.  Now the html content type will be send per default on unknown
+  content types.
+- select(2) for header and body read where using the same readset as the master
+  select(2) which is wrong.  Using now own readset.
+
+1.4
+===
+- Corrected the man page.
+- One of three access_log functions was still logging with two lines per hit.
+  Bug fixed now.
+
+1.3
+===
+- Makefiles have been ported to compile also on NetBSD, FreeBSD, Linux and
+  MacOSX.
+- Reduced access_log to one line per hit instead of two.
+- Filenames including spaces in directory listing wasn't found, because the
+  href entry had no quotes.  Bug fixed now.
+
+1.2
+===
+- If a CGI was called which didn't exist, the last called CGI was executed
+  because the responsible variable, which holds the full executable path,
+  wasn't overwritten. bug fixed now.
+- Replaced libmy with latest version libmy-1.3 (fixes important security
+  issues).
+- Replaced last strcpy(3) with strlcpy(3).
+
+1.1
+===
+- Increased socket send buffer to avoid send(2) blocking when buffer is full.
+- In server log removed unnecessary log messages, made the existing ones more
+  specific and added new log messages.
+- Removed pre-compiler debug informations because they made the source code
+  hard to read and where not really usable in action.
+
+1.0
+===
+- Fixed memory leak.
+
+0.9
+===
+- A wrong if-condition caused the nhttpd parent process to exit(0) if a
+  CGI was called which didn't exist.  Bug fixed now.
+
+0.8
+===
+- Nostromo has been rewritten from a fork(2) server to a select(2) server.
+  with this new method no more child forking for file requests is necessary
+  and the server performance increases therefore.
+- Increased performance by optimizing source code.
+- Replaced libmy with latest version libmy-1.2 (faster).
+- Added pre-compiler debug option to config.h.
+
+0.7
+===
+- Sometimes a child process still hung because not all recv(2) was checked for
+  connection timeout. placed select(2) in front of all recv(2) to check timeout.
+- Fixed wrong version numbering at several places.
+- Added install script (Install).
+
+0.6
+===
+- Sometimes a child process hung because of blocking recv(2). bug fixed now.
+- Replaced libmy with latest version libmy-1.1.
+- Added timestamps to server log file.
+- Added version option.
+
+0.5
+===
+- nhttpd didn't chroot(2) because chroot(2) where placed before all
+  configuration files could be read. bug fixed now.
+
+0.4
+===
+- libmy had missing #include <string.h> in flog.c, nsend.c, strlower.c
+  some architectures (e.g. sparc64) complained and stopped at compiling.
+  bug fixed now.
+
+0.3
+===
+- nhttpd didn't handle http control characters (\r\n\r\n) in POSTs body entity,
+  and blocked at recv(2). bug fixed now.
+
+0.2
+===
+- Changed default configfile path to /var/nostromo/conf/nhttpd.conf.
+- chdir/chroot will directly done after reading the configfile successfully.
+- SIGPIPE, SIGHUP, SIGQUIT, SIGALRM will be silently ignored now and don't
+  generate a server log anymore.
+
+0.1
+===
+- Initial version.

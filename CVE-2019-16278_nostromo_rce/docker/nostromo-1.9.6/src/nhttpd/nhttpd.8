@@ -1,0 +1,302 @@
+.\"	$nostromo: nhttpd.8,v 1.59 2016/04/12 20:32:43 hacki Exp $
+.\"
+.\" Copyright (c) 2004 - 2016 Marcus Glocker <marcus@nazgul.ch>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd Apr 10, 2016
+.Dt NHTTPD 8
+.Os
+.Sh NAME
+.Nm nhttpd
+.Nd Nostromo webserver
+.Sh SYNOPSIS
+.Nm nhttpd
+.Op Fl dhvr46
+.Op Fl c Ar configfile
+.Sh DESCRIPTION
+.Nm
+is a simple, fast and secure HTTP server.  It runs as a single process,
+handling connections with
+.Xr select 2 .
+For CGIs and directory listing it does
+.Xr fork 2 .
+.Nm
+has the minimum of HTTP/1.1 and CGI/1.1 implemented.  Also supported are;
+chroot, setuid, basic authentication, SSL, IPv6, custom responses, aliases,
+and virtual hosts.  To stop the server send a SIGTERM signal to the PID.
+The access log is written in standard CLF format.
+.Pp
+After changes in the
+.Ar configfile ,
+.Nm
+needs to be restarted, except for changes of the parameters described in
+the CONFIGURATION RELOAD section.
+.Pp
+CGIs are recognized by the file world executable flag.  If it is set, the
+file is handled as CGI and will be executed.  Therefore it is possible to
+use a CGI as index naming it like defined by the
+.Ar docindex
+option.  Whether a file or directory is accessible by
+.Nm
+is decided by its world readable flag.  If it is not set on a file or
+directory, it can't be accessed and a 403 Forbidden response will be sent.
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl d
+Enable debug mode.  More informations about ongoing processes are written to
+the
+.Xr syslog 3
+LOG_DAEMON facility.  Be careful, the logs will grow very quickly in debug
+mode.
+.It Fl h
+Prints short listing of
+.Nm
+options.
+.It Fl v
+Prints version.
+.It Fl r
+.Nm
+will
+.Xr chroot 2
+to
+.Ar serverroot .
+If you use this option, you have to change
+.Ar docroot,
+virtual hosts, and aliases in
+.Ar configfile
+to paths within your
+.Ar serverroot .
+.It Fl 4
+Enable IPv4 and IPv6.
+.It Fl 6
+Enable IPv6 only.
+.It Fl c Ar configfile
+Uses
+.Ar configfile
+as configuration file.  If this option is not set,
+.Ar /var/nostromo/conf/nhttpd.conf
+will be used by default.
+.El
+.Sh CONFIGURATION RELOAD
+Parts of the configuration can be reloaded by sending a SIGHUP signal to
+the PID.  Those are the following
+.Ar configfile
+parameters for which configuration reload works:
+.Pp
+.Bd -literal -offset indent
+logaccess
+htaccess
+custom_401
+custom_403
+custom_404
+homedirs
+homedirs_public
+.Pp
+.Ed
+For changes in the
+.Ar configfile
+sections ALIASES and VIRTUAL HOSTS no reload is required at all.
+All other parameter changes require a full restart of the
+.Nm
+process to get effective.
+.Pp
+What also happens during a SIGHUP is that the basic authentication
+credentials cache gets cleared.  This can be useful if you have
+set a new user password and want to have it effective immediately
+instead of giving a user the ability to still login with the old,
+cached password.
+.Sh SETUID
+For security reasons it is recommended to run
+.Nm
+under an extra user.  To do that create a new user on your system which has a
+valid entry in the
+.Ar /etc/passwd
+file.  Then set the
+.Ar user
+option in your
+.Ar configfile
+to that user.  It is necessary to start
+.Nm
+as root, so it can switch to that user afterwards.  If the
+.Ar user
+option is not set,
+.Nm
+will run under the user who started it, except root!
+.Pp
+Be sure that the permissions on your
+.Ar docroot
+are set correct, as
+.Nm
+needs write permissions at least on the logs directory.
+.Sh BASIC AUTHENTICATION
+To ask for basic authentication on certain directories within your
+.Ar docroot
+you have to create a file in that directory named like set by the
+.Ar htaccess
+option in your
+.Ar configfile .
+The
+.Ar htaccess
+file should contain one line including the
+.Ar realm
+option like in this example:
+.Bd -literal -offset indent
+realm Unix Developers Realm
+.Ed
+.Pp
+If the
+.Ar realm
+option can not be parsed from the
+.Ar htaccess
+file, it will be set to a default value saying 'unknown realm'.
+.Pp
+The list of authorized users and their passwords (DES encrypted) are stored
+in the file set by the
+.Ar htpasswd
+option in
+.Ar configfile .
+To create a new user entry in this file, use the
+.Ar crypt
+tool.
+.Pp
+On BSD systems it is also possible to use the BSD authentication framework.
+To do that, set the
+.Ar +bsdauth
+keyword in the
+.Ar htpasswd
+option instead of a filename.  You are then able to authenticate via your
+operating system users.  Be aware that
+.Ar +bsdauth
+requires a SSL connection to work, because you normally don't want to send
+your operating system password unencrypted over the network.  If this condition
+is not met, the caller receives a 403 Forbidden response directly.  You can
+allow none SSL connections to do BSD authentication by setting the
+.Ar +bsdauthnossl
+option.  Be sure that you really want that!
+.Pp
+.Sy Note :
+BSD authentication works just on OpenBSD for now.
+.Pp
+All subdirectories below the
+.Ar htaccess
+file are protected automatically. The client will be prompted for basic
+authentication if accessing such a protected directory.
+.Sh SSL
+.Nm
+uses the OpenSSL library, so be sure you have it installed on your
+system if you want to use SSL.  To activate SSL uncomment
+.Ar sslport
+which is the port where we will listen for SSL connections,
+.Ar sslcert
+which is the certificate file, and
+.Ar sslcertkey
+which is the certificate key file. If the certificate and the key are correct
+.Nm
+will startup with a log entry for SSL activation in the log, otherwise
+it will complain and the startup is aborted.  After a successful startup we
+are able to handle secure HTTPS connections.
+.Sh CUSTOM RESPONSES
+If an error response occurs the server will normally send a default answer
+saying for example 404 Not Found.  Instead of this default response, you can
+define your personal responses, using the custom response options in the
+.Ar configfile .
+There you define an html file which will be displayed instead of the default
+response.
+.Pp
+The custom response html file will be searched in every defined
+.Ar docroot ,
+what means in your default
+.Ar docroot
+and every virtual host.  So you can define different custom responses for each
+virtual host.  If a custom response is defined but the corresponding html file
+is not found, the default response will be send.  Supported custom responses
+are:
+.Pp
+.Bd -literal -offset indent
+401 Unauthorized
+403 Forbidden
+404 Not Found
+.Ed
+.Sh ALIASES
+With aliases you can create a fake path which will point to a real path.
+For example, to let all links starting with /icons point to another path,
+just add the following line in your
+.Ar configfile :
+.Bd -literal -offset indent
+/icons /var/nostromo/icons
+.Ed
+.Sh VIRTUAL HOSTS
+To serve virtual hosts, just add a line for each virtual host in
+.Ar configfile
+with the domain name as option and port if not 80, and the
+.Ar docroot
+of that virtual host, as in this example:
+.Bd -literal -offset indent
+www.rahel.ch     /var/nostromo/htdocs/www.rahel.ch
+www.nazgul.ch:81 /var/nostromo/htdocs/www.nazgul.ch
+.Ed
+.Pp
+For each virtual host a separate access_log is written automatically with
+the following syntax as example:
+.Pp
+.Bd -literal -offset indent
+access_log-www.rahel.ch
+access_log_www.nazgul.ch:81
+.Ed
+.Sh HOMEDIRS
+To serve the home directories of your users via HTTP, enable the
+.Ar homedirs
+option by defining the path in where the home directories are stored, normally
+/home.  To access a users home directory enter a ~ in the URL followed by
+the home directory name like in this example:
+.Bd -literal -offset indent
+http://www.nazgul.ch/~hacki/
+.Ed
+.Pp
+The content of the home directory is handled exactly the same way as a
+directory in your document root.  If some users don't want that their home
+directory can be accessed via HTTP, they shall remove the world readable flag
+on their home directory and a caller will receive a 403 Forbidden response.
+Also, if basic authentication is enabled, a user can create an .htaccess file
+in his home directory and a caller will need to authenticate.
+.Pp
+You can restrict the access within the home directories to a single sub
+directory by defining it via the
+.Ar homedirs_public
+option.
+.Sh FILES
+.Bl -tag -width "/var/nostromo/conf/nhttpd.conf" -compact
+.It Pa /var/nostromo/conf/nhttpd.conf
+server configuration
+.It Pa /var/nostromo/conf/mimes
+mime types
+.It Pa /var/nostromo/logs/nhttpd.pid
+pid file
+.It Pa /var/nostromo/logs/access_log
+http log
+.It Pa /usr/local/sbin/crypt
+create user with DES password
+.It Pa /usr/local/sbin/nhttpd
+http daemon
+.El
+.Sh HISTORY
+First version of
+.Nm
+appeared in 2004.
+.Sh THANKS
+Thanks to Marc Balmer, Daniel Hartmeier, Boris Meyer, and Wouter Schoot for
+their support.
+.Sh AUTHORS
+Marcus Glocker
+.Aq marcus@nazgul.ch

@@ -1,0 +1,57 @@
+#	$nostromo: nhttpd.conf-dist,v 1.22 2016/04/12 18:54:16 hacki Exp $
+
+# MAIN [MANDATORY]
+
+servername		www.nazgul.ch
+#servername		www.nazgul.ch:8080
+serverlisten		*
+#serverlisten		81.221.21.250 127.0.0.1 ::1
+serveradmin		webmaster@nazgul.ch
+serverroot		/var/nostromo
+servermimes		conf/mimes
+docroot			/var/nostromo/htdocs
+docindex		index.html
+
+# LOGS [OPTIONAL]
+
+logpid			logs/nhttpd.pid
+logaccess		logs/access_log
+
+# SETUID [RECOMMENDED]
+
+user			_nostromo
+
+# BASIC AUTHENTICATION [OPTIONAL]
+
+#htaccess		.htaccess
+#htpasswd		/var/nostromo/conf/.htpasswd
+#htpasswd		+bsdauth
+#htpasswd		+bsdauthnossl
+
+# SSL [OPTIONAL]
+
+#sslport		443
+#sslcert		/etc/ssl/server.crt
+#sslcertkey		/etc/ssl/private/server.key
+
+# CUSTOM RESPONSES [OPTIONAL]
+#
+# The custom responses are searched in the corresponding document root.
+
+#custom_401		custom_401.html
+#custom_403		custom_403.html
+#custom_404		custom_404.html
+
+# ALIASES [OPTIONAL]
+
+/icons			/var/nostromo/icons
+
+# VIRTUAL HOSTS [OPTIONAL]
+
+#www.rahel.ch		/var/nostromo/htdocs/www.rahel.ch
+#www.rahel.ch:8080	/var/nostromo/htdocs/www.rahel.ch
+
+# HOMEDIRS [OPTIONAL]
+
+#homedirs		/home
+#homedirs_public	public_www

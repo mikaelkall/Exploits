@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+#	$nostromo: printenv,v 1.3 2016/04/12 18:58:03 hacki Exp $
+
+# prints all environment vars
+
+echo "Content-Type: text/plain";
+echo
+
+env

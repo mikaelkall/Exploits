@@ -1,0 +1,38 @@
+1.7
+===
+- style diff which fixes spacing from Daniel Ouellet.
+
+1.6
+===
+- strcuts(): don't exceed the source string buffer boundary by one byte if
+  the start character isn't found.  Bug reported by Szabolcs Nagy
+
+1.5
+===
+- cast char to int for tolower(3).  caused compilation error on some
+  platforms
+
+1.4
+===
+- removed -ansi compile option to follow OpenBSD
+- fixed -pedantic compile option source code quirks
+- replaced old BSD copyright headers with new one
+
+1.3
+===
+- replaced all vsprintf(3) with vfprintf(3)
+- removed nsend() because too insecure
+
+1.2
+===
+- fparse(): instead of read(2) byte by byte from the file, one read(2) from
+  the whole file to memory is done. memset(3) have been discarded totaly.
+  this turns fparse() 20 times faster as in the version before!
+
+1.1
+===
+- added new function flogd()
+
+1.0
+===
+- initial version

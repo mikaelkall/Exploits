@@ -1,0 +1,30 @@
+	$nostromo: README,v 1.12 2016/04/12 18:52:41 hacki Exp $
+
+Platforms
+---------
+Nostromo has successfully compiled and tested on:
+
+- OpenBSD
+- FreeBSD
+- NetBSD
+- Linux: Depending on the distribution, you may need to install the OpenSSL
+	 package before compiling.
+
+Installation
+------------
+To compile and install do the following in the top level directory:
+
+	make
+	make install (as root)
+
+For any further help please read the man page:
+
+	man nhttpd
+
+Distribution
+------------
+You can download the latest version of this software from the official
+homepage:
+
+http://www.nazgul.ch/dev.html
+
